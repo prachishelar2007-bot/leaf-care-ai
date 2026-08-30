@@ -20,21 +20,18 @@ from pathlib import Path
 
 def classify_and_explain_with_gemini(image_path: Path):
     """
-    Direct multimodal leaf diagnosis.
-    Accepts Path object of the leaf photo.
-    Returns parsed dictionary containing class prediction and care details.
+    Direct multimodal leaf diagnosis via raw HTTP REST call to Google's Gemini API.
     """
     if not GEMINI_API_KEY:
         raise RuntimeError("GEMINI_API_KEY is not configured.")
         
-    import google.generativeai as genai
     from PIL import Image
     import io
-    
-    genai.configure(api_key=GEMINI_API_KEY, transport='rest')
+    import base64
+    import requests
     
     img = Image.open(image_path)
-    img_payload = img
+    base64_image = ""
     try:
         # Resize image to max 600px width/height while maintaining aspect ratio
         img.thumbnail((600, 600))
@@ -44,14 +41,16 @@ def classify_and_explain_with_gemini(image_path: Path):
         # Compress to JPEG with 70% quality (typically shrinks image to ~30KB)
         buffer = io.BytesIO()
         img.save(buffer, format="JPEG", quality=70)
-        img_payload = {
-            "mime_type": "image/jpeg",
-            "data": buffer.getvalue()
-        }
+        base64_image = base64.b64encode(buffer.getvalue()).decode('utf-8')
     except Exception as e:
         logger.warning(f"Failed to compress image for Gemini API call: {e}")
-        # Fall back to passing the raw image if compression fails
-        img_payload = img
+        # Fall back to reading raw file bytes
+        try:
+            with open(image_path, "rb") as f:
+                base64_image = base64.b64encode(f.read()).decode('utf-8')
+        except Exception as read_err:
+            logger.error(f"Failed to read raw image file: {read_err}")
+            raise read_err
     
     # Check for plant clues in the filename (e.g. peace_lily, monstera, etc.)
     filename_lower = Path(image_path).name.lower()
@@ -93,10 +92,38 @@ def classify_and_explain_with_gemini(image_path: Path):
     - If the image does not show a plant leaf, set plant to 'Unknown', disease to 'Invalid', and explain the issue in the description.
     """
     
-    model = genai.GenerativeModel(GEMINI_MODEL)
-    response = model.generate_content([prompt, img_payload])
+    # --------------------------------------------------------
+    # SEND RAW HTTP POST REQUEST TO GEMINI API
+    # --------------------------------------------------------
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
+    headers = {
+        "x-goog-api-key": GEMINI_API_KEY,
+        "Content-Type": "application/json"
+    }
     
-    parsed = _parse_json(response.text)
+    payload = {
+        "contents": [
+            {
+                "parts": [
+                    {"text": prompt},
+                    {
+                        "inlineData": {
+                            "mimeType": "image/jpeg",
+                            "data": base64_image
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+    
+    response = requests.post(url, headers=headers, json=payload, timeout=60)
+    response.raise_for_status()
+    data = response.json()
+    
+    # Extract text from response structure
+    text = data["candidates"][0]["content"]["parts"][0]["text"]
+    parsed = _parse_json(text)
     
     # Adapt keys so it maps to the UI dictionary keys seamlessly
     adapted = {
