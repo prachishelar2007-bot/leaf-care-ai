@@ -2,10 +2,14 @@ import os
 import json
 from pathlib import Path
 from PIL import Image
-import torch
-import torch.nn as nn
-import torchvision.models as models
-import torchvision.transforms as transforms
+try:
+    import torch
+    import torch.nn as nn
+    import torchvision.models as models
+    import torchvision.transforms as transforms
+    TORCH_AVAILABLE = True
+except ImportError:
+    TORCH_AVAILABLE = False
 import logging
 
 logger = logging.getLogger(__name__)
@@ -21,6 +25,11 @@ class DiseasePredictor:
         self.ready = False
         self.model_path = model_path
         self.labels_path = labels_path
+        
+        if not TORCH_AVAILABLE:
+            logger.warning("PyTorch environment is not installed. Offline MobileNetV2 predictor is disabled.")
+            return
+            
         self._device = torch.device('cpu')
         
         # ----------------------------------------------------

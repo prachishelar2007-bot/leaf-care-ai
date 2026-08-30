@@ -247,8 +247,12 @@ def analyze():
         # ----------------------------------------------------
         # CHECK WHETHER MODEL IS AVAILABLE
         # ----------------------------------------------------
+        from src.llm_service import classify_and_explain_with_gemini
+        from src.config import LLM_PROVIDER, GEMINI_API_KEY
 
-        if not predictor.ready:
+        using_gemini = (LLM_PROVIDER == "gemini" and GEMINI_API_KEY)
+
+        if not using_gemini and not predictor.ready:
 
             image_path.unlink(
                 missing_ok=True
@@ -270,11 +274,8 @@ def analyze():
         # ----------------------------------------------------
         # PREDICT DISEASE
         # ----------------------------------------------------
-        from src.llm_service import classify_and_explain_with_gemini
-        from src.config import LLM_PROVIDER, GEMINI_API_KEY
-
         ai_result_json = None
-        if LLM_PROVIDER == "gemini" and GEMINI_API_KEY:
+        if using_gemini:
             try:
                 # Direct multimodal classification via Gemini
                 ai_result = classify_and_explain_with_gemini(image_path)
