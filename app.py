@@ -84,7 +84,7 @@ def init_db():
     Creates the SQLite database and prediction-history table.
     """
 
-    with sqlite3.connect("data/history.db") as connection:
+    with sqlite3.connect("data/history.db", timeout=30) as connection:
 
         connection.execute(
             """
@@ -302,7 +302,7 @@ def analyze():
         # ----------------------------------------------------
         # SAVE PREDICTION HISTORY
         # ----------------------------------------------------
-        with sqlite3.connect("data/history.db") as connection:
+        with sqlite3.connect("data/history.db", timeout=30) as connection:
             cursor = connection.cursor()
             cursor.execute(
                 """
@@ -390,7 +390,7 @@ def result_details(prediction_id):
     """
     Displays the result details for a prediction, loading from database.
     """
-    with sqlite3.connect("data/history.db") as connection:
+    with sqlite3.connect("data/history.db", timeout=30) as connection:
         connection.row_factory = sqlite3.Row
         row = connection.execute(
             "SELECT * FROM predictions WHERE id = ?", (prediction_id,)
@@ -471,7 +471,7 @@ def api_chat():
     if not prediction_id or not user_message:
         return jsonify({"response": "Invalid request parameters."}), 400
 
-    with sqlite3.connect("data/history.db") as connection:
+    with sqlite3.connect("data/history.db", timeout=30) as connection:
         connection.row_factory = sqlite3.Row
         row = connection.execute(
             "SELECT plant, disease FROM predictions WHERE id = ?", (prediction_id,)
@@ -510,7 +510,8 @@ def uploaded_file(filename):
 def history():
 
     with sqlite3.connect(
-        "data/history.db"
+        "data/history.db",
+        timeout=30
     ) as connection:
 
         connection.row_factory = sqlite3.Row
