@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+
+{% block title %}Analysis Result - Leaf-Care AI{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Left Column: Image and Classification Details -->
+    <div class="col-lg-5 mb-4">
+        <!-- Diagnostic Summary Card -->
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+            <div class="card-header bg-success-subtle border-0 py-3">
+                <h5 class="card-title fw-bold text-success mb-0 d-flex align-items-center">
+                    <i class="bi bi-shield-shaded me-2"></i> Diagnostic Result
+                </h5>
+            </div>
+            <div class="card-body text-center p-4">
+                <div class="mb-3">
+                    <img src="{{ image_url }}" alt="Uploaded Leaf" class="img-fluid rounded-3 shadow-sm max-height-300">
+                </div>
+
+                <div class="border-top pt-3">
+                    <span class="text-muted small d-block mb-1">PLANT TYPE & PATHOGEN</span>
+                    <h3 class="fw-bold font-heading mb-2">
+                        {{ prediction['plant'] }} 
+                        <span class="text-secondary">—</span> 
+                        <span class="{% if "healthy" in prediction['disease'] | lower %}text-success{% else %}text-danger{% endif %}">
+                            {{ prediction['disease'] }}
+                        </span>
+                    </h3>
+
+                    <!-- Status Badge -->
+                    <div class="mb-3">
+                        {% if "healthy" in prediction['disease'] | lower %}
+                            <span class="badge bg-success-subtle text-success border border-success px-3 py-2 rounded-pill fw-semibold">
+                                <i class="bi bi-check-circle-fill me-1"></i> Healthy Specimen
+                            </span>
+                        {% else %}
+                            <span class="badge bg-danger-subtle text-danger border border-danger px-3 py-2 rounded-pill fw-semibold">
+                                <i class="bi bi-exclamation-triangle-fill me-1"></i> Infection Detected
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Confidence Progress Bar -->
+                    <div class="px-4">
+                        <div class="d-flex justify-content-between text-muted small mb-1">
+                            <span>Classification Confidence</span>
+                            <span class="fw-semibold">{{ "%.1f" | format(prediction['confidence'] * 100) }}%</span>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar {% if prediction['confidence'] > 0.85 %}bg-success{% elif prediction['confidence'] > 0.60 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                 role="progressbar" 
+                                 style="width: {{ prediction['confidence'] * 100 }}%" 
+                                 aria-valuenow="{{ prediction['confidence'] * 100 }}" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="100">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Smart Watering Management Card -->
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+            <div class="card-header bg-info-subtle border-0 py-3">
+                <h5 class="card-title fw-bold text-info-emphasis mb-0 d-flex align-items-center">
+                    <i class="bi bi-droplet-fill me-2 text-info"></i> Smart Watering Management
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="mb-3 border-bottom pb-2">
+                    <span class="text-muted small d-block mb-1 fw-bold text-uppercase"><i class="bi bi-calendar-event me-1 text-info"></i> Watering Frequency Guidance</span>
+                    <strong class="text-dark fs-6">{{ watering['frequency'] }}</strong>
+                </div>
+                
+                <div class="mb-3 border-bottom pb-2">
+                    <span class="text-muted small d-block mb-1 fw-bold text-uppercase"><i class="bi bi-water me-1 text-info"></i> Watering Method</span>
+                    <span class="text-dark small d-block">{{ watering['method'] }}</span>
+                </div>
+                
+                <div class="mb-3 border-bottom pb-2">
+                    <span class="text-muted small d-block mb-1 fw-bold text-uppercase"><i class="bi bi-clock me-1 text-info"></i> Recommended Time</span>
+                    <span class="text-dark small d-block">{{ watering['best_time'] }}</span>
+                </div>
+                
+                <div class="mb-3 border-bottom pb-2">
+                    <span class="text-muted small d-block mb-1 fw-bold text-uppercase"><i class="bi bi-sliders me-1 text-info"></i> Disease-Related Adjustment</span>
+                    <span class="text-dark small d-block text-warning-emphasis bg-warning-subtle px-2.5 py-1 rounded border border-warning-subtle mt-1 d-inline-block">{{ watering['disease_adjustment'] }}</span>
+                </div>
+                
+                <div class="mt-3">
+                    <span class="text-muted small d-block mb-1 fw-bold text-uppercase"><i class="bi bi-pencil-square me-1 text-info"></i> Care Note</span>
+                    <div class="alert alert-info border-0 shadow-sm rounded-3 py-2 px-3 mb-0">
+                        <p class="mb-0 small">{{ watering['note'] }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Care Plan & Interactive Assistant Chatbot -->
+    <div class="col-lg-7">
+        <ul class="nav nav-pills mb-3" id="result-tabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active rounded-pill px-4 fw-bold" id="care-plan-tab" data-bs-toggle="tab" data-bs-target="#care-plan-pane" type="button" role="tab">
+                    <i class="bi bi-file-earmark-medical me-1"></i> Care & Treatment Plan
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link rounded-pill px-4 fw-bold" id="chat-tab" data-bs-toggle="tab" data-bs-target="#chat-pane" type="button" role="tab">
+                    <i class="bi bi-chat-dots me-1"></i> AI Agronomist Chat
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="result-tabs-content">
+            <!-- Care Plan Tab -->
+            <div class="tab-pane fade show active" id="care-plan-pane" role="tabpanel" tabindex="0">
+                <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+                    <div id="care-plan-markdown" class="care-plan-content"></div>
+                </div>
+            </div>
+
+            <!-- Chatbot Tab -->
+            <div class="tab-pane fade" id="chat-pane" role="tabpanel" tabindex="0">
+                <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+                    <div class="card-header bg-success text-white py-3">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-robot fs-4 me-2"></i>
+                            <div>
+                                <h6 class="fw-bold mb-0">Leaf-Care AI Botanical Agent</h6>
+                                <span class="small opacity-75">Ask questions about {{ prediction['plant'] }} care</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Chat Box -->
+                    <div class="chat-container p-3" id="chat-history">
+                        <!-- Welcome message -->
+                        <div class="d-flex align-items-start mb-3">
+                            <div class="chat-avatar bg-success text-white rounded-circle p-2 me-2">
+                                <i class="bi bi-robot"></i>
+                            </div>
+                            <div class="chat-bubble bot-bubble p-3 rounded-3 shadow-sm">
+                                <p class="mb-0">Hello! I'm your Leaf-Care chatbot. I'm ready to answer any questions you have regarding your <strong>{{ prediction['plant'] }}</strong> which was diagnosed with <strong>{{ prediction['disease'] }}</strong>.</p>
+                                <p class="mb-0 mt-2 small text-muted">For example, ask: <em>"Can this spread to my other plants?"</em> or <em>"What organic copper spray brands can I use?"</em></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Input Box -->
+                    <div class="card-footer bg-light border-0 p-3">
+                        <form id="chat-form" class="input-group">
+                            <input type="text" id="chat-input" class="form-control rounded-start-3 py-2.5" placeholder="Type your message..." autocomplete="off" required>
+                            <button class="btn btn-success px-4 rounded-end-3" type="submit" id="chat-send-btn">
+                                <i class="bi bi-send-fill"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Marked.js for markdown parsing -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+    // Global variable for current prediction context
+    const predictionId = {{ prediction['id'] }};
+    
+    // Parse the care plan dictionary
+    const aiResult = {{ ai_result | tojson }};
+    
+    // Dynamically build markdown from the dictionary keys
+    let markdown = "";
+    
+    // Add notice if present
+    if (aiResult.notice) {
+        markdown += `> [!NOTE]\n> ${aiResult.notice}\n\n`;
+    }
+    
+    if (aiResult.summary) {
+        markdown += `### 1. Summary\n${aiResult.summary}\n\n`;
+    }
+    
+    if (aiResult.symptoms && aiResult.symptoms.length > 0) {
+        markdown += `### 2. Symptoms\n`;
+        aiResult.symptoms.forEach(s => {
+            markdown += `- ${s}\n`;
+        });
+        markdown += `\n`;
+    }
+    
+    if (aiResult.causes && aiResult.causes.length > 0) {
+        markdown += `### 3. Possible Causes\n`;
+        aiResult.causes.forEach(c => {
+            markdown += `- ${c}\n`;
+        });
+        markdown += `\n`;
+    }
+    
+    if (aiResult.treatment && aiResult.treatment.length > 0) {
+        markdown += `### 4. Treatment / Care\n`;
+        aiResult.treatment.forEach(t => {
+            markdown += `- ${t}\n`;
+        });
+        markdown += `\n`;
+    }
+    
+    if (aiResult.prevention && aiResult.prevention.length > 0) {
+        markdown += `### 5. Prevention\n`;
+        aiResult.prevention.forEach(p => {
+            markdown += `- ${p}\n`;
+        });
+        markdown += `\n`;
+    }
+    
+    if (aiResult.watering && aiResult.watering.length > 0) {
+        markdown += `### 6. Smart Watering\n`;
+        aiResult.watering.forEach(w => {
+            markdown += `- ${w}\n`;
+        });
+        markdown += `\n`;
+    }
+    
+    document.getElementById('care-plan-markdown').innerHTML = marked.parse(markdown);
+</script>
+{% endblock %}

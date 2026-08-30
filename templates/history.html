@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Prediction History - Leaf-Care AI{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="d-flex align-items-center justify-content-between mb-4 mt-2">
+            <h2 class="fw-bold font-heading text-success mb-0">
+                <i class="bi bi-clock-history me-2"></i> Prediction History
+            </h2>
+            <a href="{{ url_for('index') }}" class="btn btn-success rounded-pill px-4 fw-semibold shadow-sm">
+                <i class="bi bi-plus-circle me-1"></i> New Scan
+            </a>
+        </div>
+
+        {% if rows %}
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col" class="ps-4">Preview</th>
+                                <th scope="col">Plant</th>
+                                <th scope="col">Diagnosis</th>
+                                <th scope="col">Confidence</th>
+                                <th scope="col">Scan Date</th>
+                                <th scope="col" class="text-end pe-4">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in rows %}
+                                <tr>
+                                    <td class="ps-4">
+                                        <img src="{{ url_for('uploaded_file', filename=row['image_name']) }}" alt="Leaf Thumbnail" class="img-thumbnail rounded shadow-sm" style="width: 60px; height: 60px; object-fit: cover;">
+                                    </td>
+                                    <td>
+                                        <span class="fw-semibold text-dark">{{ row['plant'] }}</span>
+                                    </td>
+                                    <td>
+                                        {% if "healthy" in row['disease'] | lower %}
+                                            <span class="badge bg-success-subtle text-success border border-success rounded-pill px-2.5 py-1.5 fw-semibold">
+                                                <i class="bi bi-check-circle-fill me-1"></i> Healthy
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-danger-subtle text-danger border border-danger rounded-pill px-2.5 py-1.5 fw-semibold">
+                                                <i class="bi bi-exclamation-triangle-fill me-1"></i> {{ row['disease'] }}
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <span class="me-2 small fw-semibold text-secondary">{{ "%.1f" | format(row['confidence'] * 100) }}%</span>
+                                            <div class="progress" style="width: 60px; height: 6px;">
+                                                <div class="progress-bar {% if row['confidence'] > 0.85 %}bg-success{% elif row['confidence'] > 0.60 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                                     role="progressbar" 
+                                                     style="width: {{ row['confidence'] * 100 }}%">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="text-muted small">{{ row['created_at'] }}</span>
+                                    </td>
+                                    <td class="text-end pe-4">
+                                        <a href="{{ url_for('result_details', prediction_id=row['id']) }}" class="btn btn-outline-success btn-sm rounded-pill px-3">
+                                            <i class="bi bi-eye-fill me-1"></i> Details
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% else %}
+            <div class="card border-0 shadow-sm rounded-4 p-5 text-center my-4">
+                <div class="p-4">
+                    <i class="bi bi-calendar2-x fs-1 text-muted mb-3 d-block"></i>
+                    <h4 class="fw-bold font-heading text-dark">No Scans Found</h4>
+                    <p class="text-muted mb-4">You haven't scanned any leaves yet. Start diagnosing your plants today!</p>
+                    <a href="{{ url_for('index') }}" class="btn btn-success rounded-pill px-5 py-2.5 fw-bold shadow-sm">
+                        <i class="bi bi-camera-fill me-2"></i> Scan Your First Leaf
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

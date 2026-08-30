@@ -1,0 +1,26 @@
+# Python caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment configuration (never commit secrets!)
+.env
+.venv/
+env/
+venv/
+ENV/
+
+# Databases
+data/history.db
+data/*.db
+
+# Large models directory
+models/
+
+# User uploads (ignore user uploaded images)
+static/uploads/*
+!static/uploads/.gitkeep
+
+# Large datasets
+dataset/
+

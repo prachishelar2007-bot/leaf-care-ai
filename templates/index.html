@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Scan Leaf - Leaf-Care AI{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 text-center my-4">
+        <h1 class="display-5 fw-bold text-success font-heading mb-2">Diagnose Your Plant's Health</h1>
+        <p class="lead text-muted">Upload a photo of a single leaf to identify diseases and receive instant AI-powered care advice and watering routines.</p>
+    </div>
+</div>
+
+<div class="row justify-content-center mb-5">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+            <div class="card-body p-5">
+                <form id="upload-form" action="{{ url_for('analyze') }}" method="POST" enctype="multipart/form-data">
+                    <!-- Drop Zone -->
+                    <div id="drop-zone" class="upload-drop-zone border border-dashed rounded-3 p-4 text-center cursor-pointer mb-3 position-relative">
+                        <input type="file" id="file-input" name="leaf_image" accept=".png, .jpg, .jpeg" class="d-none">
+                        <div id="drop-zone-content">
+                            <i class="bi bi-cloud-arrow-up-fill text-success fs-1 mb-2 d-block"></i>
+                            <span class="fw-semibold text-dark">Drag and drop your leaf photo here</span>
+                            <p class="text-muted small mb-0 mt-1">or click to browse from files</p>
+                            <span class="badge bg-light text-muted mt-2">Supports JPG, JPEG, PNG (Max 5MB)</span>
+                        </div>
+                        
+                        <!-- Image Preview -->
+                        <div id="preview-container" class="d-none mt-2">
+                            <img id="image-preview" src="#" alt="Leaf Preview" class="img-fluid rounded shadow-sm max-height-250">
+                            <button type="button" id="remove-btn" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-2 rounded-circle shadow-sm">
+                                <i class="bi bi-x"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Action Button -->
+                    <button type="submit" id="submit-btn" class="btn btn-success w-100 py-2.5 rounded-3 fw-bold shadow-sm d-flex align-items-center justify-content-center" disabled>
+                        <i class="bi bi-shield-check me-2"></i> Analyze Leaf Health
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Analyzer Loading Overlay -->
+<div id="loading-overlay" class="loading-overlay d-none">
+    <div class="spinner-box text-center">
+        <div class="spinner-border text-success fs-2 mb-3" style="width: 3.5rem; height: 3.5rem;" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <h4 class="fw-bold text-dark font-heading">Analyzing Leaf Image...</h4>
+        <p class="text-muted mb-0">Our MobileNetV2 model is scanning the cells for pathogens.</p>
+    </div>
+</div>
+{% endblock %}
