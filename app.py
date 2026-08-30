@@ -107,6 +107,8 @@ def init_db():
 
         connection.commit()
 
+# Always initialize database table on import (local & production)
+init_db()
 
 # ============================================================
 # FILE EXTENSION VALIDATION
@@ -554,9 +556,6 @@ def file_too_large(error):
 # ============================================================
 
 if __name__ == "__main__":
-
-    # Create database/table before starting Flask.
-    init_db()
 
     # Start local development server.
     app.run(
