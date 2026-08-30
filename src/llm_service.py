@@ -31,7 +31,7 @@ def classify_and_explain_with_gemini(image_path: Path):
     from PIL import Image
     import io
     
-    genai.configure(api_key=GEMINI_API_KEY)
+    genai.configure(api_key=GEMINI_API_KEY, transport='rest')
     
     img = Image.open(image_path)
     img_payload = img
@@ -506,7 +506,7 @@ def chat_response(history, user_message, plant, disease):
     if LLM_PROVIDER == 'gemini' and GEMINI_API_KEY:
         try:
             import google.generativeai as genai
-            genai.configure(api_key=GEMINI_API_KEY)
+            genai.configure(api_key=GEMINI_API_KEY, transport='rest')
             contents = []
             for msg in history:
                 role = 'user' if msg['role'] == 'user' else 'model'
