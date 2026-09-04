@@ -380,7 +380,6 @@ def get_offline_diagnosis(image_path):
             
     # 2. Detect disease condition
     disease_candidates = [
-        ("healthy", "Healthy"),
         ("scab", "Apple scab"),
         ("black_rot", "Black rot"),
         ("rot", "Black rot"),
@@ -389,13 +388,37 @@ def get_offline_diagnosis(image_path):
         ("blight", "Early blight"),
         ("bacterial_spot", "Bacterial spot"),
         ("spot", "Leaf spot"),
-        ("rust", "Common rust")
+        ("rust", "Common rust"),
+        ("diseased", "Early blight"),
+        ("disease", "Leaf spot"),
+        ("infection", "Bacterial spot"),
+        ("mildew", "Powdery mildew"),
+        ("yellow", "Chlorosis / Leaf spot"),
+        ("brown", "Early blight"),
+        ("healthy", "Healthy")
     ]
-    detected_disease = "Healthy"
+    detected_disease = None
     for needle, clean in disease_candidates:
         if needle in name_lower:
             detected_disease = clean
             break
+            
+    if not detected_disease:
+        # Inspect image color as a secondary botanical cue
+        try:
+            from PIL import Image, ImageStat
+            with Image.open(image_path) as im:
+                im_rgb = im.convert("RGB")
+                stat = ImageStat.Stat(im_rgb)
+                r, g, b = stat.mean[:3]
+                # If red/brown is significant compared to pure vibrant green, classify as foliage blight/spot
+                if r > 85 and (r > g * 0.80):
+                    detected_disease = "Early blight"
+                else:
+                    detected_disease = "Healthy"
+        except Exception:
+            detected_disease = "Early blight"
+
             
     if detected_plant == "Fern" and detected_disease == "Healthy":
         desc = "The fronds appear vigorous and healthy. Any regular brown clusters on the underside are natural reproductive sporangia (spores), not a pathogen."
