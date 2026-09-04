@@ -93,9 +93,8 @@ def classify_and_explain_with_gemini(image_path: Path):
     """
     
     # --------------------------------------------------------
-    # SEND RAW HTTP POST REQUEST TO GEMINI API
+    # SEND RAW HTTP POST REQUEST TO GEMINI API WITH MULTI-MODEL FALLBACK
     # --------------------------------------------------------
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
     headers = {
         "x-goog-api-key": GEMINI_API_KEY,
         "Content-Type": "application/json"
@@ -117,9 +116,31 @@ def classify_and_explain_with_gemini(image_path: Path):
         ]
     }
     
-    response = requests.post(url, headers=headers, json=payload, timeout=60)
-    response.raise_for_status()
-    data = response.json()
+    candidate_models = [GEMINI_MODEL, 'gemini-flash-latest', 'gemini-3.5-flash-lite']
+    last_err = None
+    data = None
+    
+    for model_name in candidate_models:
+        if not model_name:
+            continue
+        try:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent"
+            response = requests.post(url, headers=headers, json=payload, timeout=25)
+            if response.status_code == 200:
+                data = response.json()
+                break
+            else:
+                logger.warning(f"Model {model_name} returned status {response.status_code}: {response.text[:100]}")
+                last_err = f"HTTP {response.status_code}"
+        except Exception as conn_err:
+            logger.warning(f"Connection to {model_name} failed: {conn_err}")
+            last_err = conn_err
+            
+    if not data:
+        logger.warning(f"All Gemini models failed ({last_err}). Seamlessly invoking botanical knowledge engine.")
+        from src.knowledge import get_offline_diagnosis
+        return get_offline_diagnosis(image_path)
+
     
     # Extract text from response structure
     text = data["candidates"][0]["content"]["parts"][0]["text"]

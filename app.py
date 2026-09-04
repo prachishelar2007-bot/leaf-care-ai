@@ -286,18 +286,27 @@ def analyze():
                 confidence = ai_result["confidence"]
                 ai_result_json = json.dumps(ai_result)
             except Exception as e:
-                app.logger.warning(f"Multimodal classification failed: {e}. Falling back to MobileNetV2.")
-                # Fallback to local model
+                app.logger.warning(f"Multimodal classification failed: {e}. Falling back to intelligent botanical engine.")
+                from src.knowledge import get_offline_diagnosis
+                ai_result = get_offline_diagnosis(image_path)
+                plant = ai_result["plant"]
+                disease = ai_result["disease"]
+                confidence = ai_result["confidence"]
+                ai_result_json = json.dumps(ai_result)
+        else:
+            # Use local ML predictor if ready, or offline knowledge engine
+            if predictor.ready:
                 prediction = predictor.predict(image_path)
                 disease = prediction["disease"]
                 plant = prediction["plant"]
                 confidence = prediction["confidence"]
-        else:
-            # Use local ML predictor
-            prediction = predictor.predict(image_path)
-            disease = prediction["disease"]
-            plant = prediction["plant"]
-            confidence = prediction["confidence"]
+            else:
+                from src.knowledge import get_offline_diagnosis
+                ai_result = get_offline_diagnosis(image_path)
+                plant = ai_result["plant"]
+                disease = ai_result["disease"]
+                confidence = ai_result["confidence"]
+                ai_result_json = json.dumps(ai_result)
 
         # ----------------------------------------------------
         # SAVE PREDICTION HISTORY

@@ -14,8 +14,10 @@ ENV/
 data/history.db
 data/*.db
 
-# Large models directory
-models/
+# Large model weight files (allow labels and json)
+models/*.keras
+models/*.pth
+
 
 # User uploads (ignore user uploaded images)
 static/uploads/*

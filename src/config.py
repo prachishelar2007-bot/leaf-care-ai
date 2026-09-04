@@ -2,14 +2,15 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-load_dotenv()
-
-
 # ============================================================
-# PROJECT DIRECTORIES
+# PROJECT DIRECTORIES & CONFIG
 # ============================================================
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+load_dotenv(BASE_DIR / ".env")
+load_dotenv()
+
 
 UPLOAD_DIR = BASE_DIR / "static" / "uploads"
 
@@ -99,7 +100,7 @@ GEMINI_API_KEY = os.getenv(
 
 GEMINI_MODEL = os.getenv(
     "GEMINI_MODEL",
-    "gemini-flash-lite-latest"
+    "gemini-flash-latest"
 )
 
 
