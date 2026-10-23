@@ -223,6 +223,18 @@ def get_disease_knowledge(
         disease
     )
 
+    if "healthy" in normalized:
+        return {
+            "description": (
+                f"The {plant} specimen displays balanced foliage pigmentation and "
+                f"healthy structural turgor without acute pathogenic symptoms."
+            ),
+            "symptoms": [],
+            "causes": [],
+            "treatment": [],
+            "prevention": []
+        }
+
     # --------------------------------------------------------
     # SEARCH KNOWN DISEASES
     # --------------------------------------------------------
@@ -312,6 +324,29 @@ def get_watering_routine(
     fixed irrigation prescription.
     """
 
+    is_healthy = "healthy" in disease.lower()
+
+    if is_healthy:
+        disease_adjustment = "Foliage is healthy — maintain standard routine watering."
+        care_note = (
+            f"This routine is a general care guide for maintaining "
+            f"healthy {plant} foliage; it is not a crop-specific irrigation prescription."
+        )
+    else:
+        disease_adjustment = (
+            "Because disease can be associated with "
+            "excess moisture, avoid overwatering and "
+            "prolonged leaf wetness. Adjust frequency "
+            "for crop, soil, weather, pot size, and "
+            "local conditions."
+        )
+        care_note = (
+            f"This routine is a general care guide "
+            f"for {plant} affected by {disease}; "
+            "it is not a crop-specific irrigation "
+            "prescription."
+        )
+
     return {
 
         "frequency": (
@@ -331,20 +366,9 @@ def get_watering_routine(
             "the day."
         ),
 
-        "disease_adjustment": (
-            "Because disease can be associated with "
-            "excess moisture, avoid overwatering and "
-            "prolonged leaf wetness. Adjust frequency "
-            "for crop, soil, weather, pot size, and "
-            "local conditions."
-        ),
+        "disease_adjustment": disease_adjustment,
 
-        "note": (
-            f"This routine is a general care guide "
-            f"for {plant} affected by {disease}; "
-            "it is not a crop-specific irrigation "
-            "prescription."
-        )
+        "note": care_note
     }
 
 
@@ -417,9 +441,29 @@ def get_offline_diagnosis(image_path):
         desc = f"The {detected_plant} specimen shows visible foliar discoloration, marginal necrosis, and tissue breakdown characteristic of {detected_disease}."
 
         
-    knowledge = get_disease_knowledge(detected_plant, detected_disease)
+    knowledge = get_disease_knowledge(detected_disease, detected_plant)
     watering = get_watering_routine(detected_plant, detected_disease)
     
+    if detected_disease == "Healthy":
+        return {
+            "provider": "Leaf-Care Intelligent Botanical Engine",
+            "notice": "Analysis generated via local botanical knowledge engine (Cloud AI fallback).",
+            "summary": desc,
+            "symptoms": [],
+            "causes": [],
+            "treatment": [],
+            "prevention": [],
+            "watering": [
+                watering["frequency"],
+                watering["method"],
+                watering["best_time"],
+                watering["disease_adjustment"]
+            ],
+            "plant": detected_plant,
+            "disease": detected_disease,
+            "confidence": 0.94
+        }
+        
     return {
         "provider": "Leaf-Care Intelligent Botanical Engine",
         "notice": "Analysis generated via local botanical knowledge engine (Cloud AI fallback).",

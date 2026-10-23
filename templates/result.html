@@ -84,10 +84,17 @@
                     <span class="text-dark small d-block">{{ watering['best_time'] }}</span>
                 </div>
                 
+                {% if "healthy" not in prediction['disease'] | lower %}
                 <div class="mb-3 border-bottom pb-2">
                     <span class="text-muted small d-block mb-1 fw-bold text-uppercase"><i class="bi bi-sliders me-1 text-info"></i> Disease-Related Adjustment</span>
                     <span class="text-dark small d-block text-warning-emphasis bg-warning-subtle px-2.5 py-1 rounded border border-warning-subtle mt-1 d-inline-block">{{ watering['disease_adjustment'] }}</span>
                 </div>
+                {% else %}
+                <div class="mb-3 border-bottom pb-2">
+                    <span class="text-muted small d-block mb-1 fw-bold text-uppercase"><i class="bi bi-check-circle me-1 text-success"></i> Plant Condition Status</span>
+                    <span class="text-dark small d-block text-success-emphasis bg-success-subtle px-2.5 py-1 rounded border border-success-subtle mt-1 d-inline-block">Standard routine — foliage is healthy!</span>
+                </div>
+                {% endif %}
                 
                 <div class="mt-3">
                     <span class="text-muted small d-block mb-1 fw-bold text-uppercase"><i class="bi bi-pencil-square me-1 text-info"></i> Care Note</span>
@@ -104,7 +111,11 @@
         <ul class="nav nav-pills mb-3" id="result-tabs" role="tablist">
             <li class="nav-item" role="presentation">
                 <button class="nav-link active rounded-pill px-4 fw-bold" id="care-plan-tab" data-bs-toggle="tab" data-bs-target="#care-plan-pane" type="button" role="tab">
-                    <i class="bi bi-file-earmark-medical me-1"></i> Care & Treatment Plan
+                    {% if "healthy" in prediction['disease'] | lower %}
+                        <i class="bi bi-heart-pulse-fill me-1 text-success"></i> Plant Health Status
+                    {% else %}
+                        <i class="bi bi-file-earmark-medical me-1 text-danger"></i> Care & Treatment Plan
+                    {% endif %}
                 </button>
             </li>
             <li class="nav-item" role="presentation">
@@ -143,8 +154,13 @@
                                 <i class="bi bi-robot"></i>
                             </div>
                             <div class="chat-bubble bot-bubble p-3 rounded-3 shadow-sm">
-                                <p class="mb-0">Hello! I'm your Leaf-Care chatbot. I'm ready to answer any questions you have regarding your <strong>{{ prediction['plant'] }}</strong> which was diagnosed with <strong>{{ prediction['disease'] }}</strong>.</p>
-                                <p class="mb-0 mt-2 small text-muted">For example, ask: <em>"Can this spread to my other plants?"</em> or <em>"What organic copper spray brands can I use?"</em></p>
+                                {% if "healthy" in prediction['disease'] | lower %}
+                                    <p class="mb-0">Hello! I'm your Leaf-Care chatbot. Great news—your <strong>{{ prediction['plant'] }}</strong> is completely healthy and thriving!</p>
+                                    <p class="mb-0 mt-2 small text-muted">Ask me anything about daily maintenance, light, repotting, or fertilizers to keep it in top shape!</p>
+                                {% else %}
+                                    <p class="mb-0">Hello! I'm your Leaf-Care chatbot. I'm ready to answer any questions you have regarding your <strong>{{ prediction['plant'] }}</strong> which was diagnosed with <strong>{{ prediction['disease'] }}</strong>.</p>
+                                    <p class="mb-0 mt-2 small text-muted">For example, ask: <em>"Can this spread to my other plants?"</em> or <em>"What organic copper spray brands can I use?"</em></p>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
@@ -174,57 +190,64 @@
     
     // Parse the care plan dictionary
     const aiResult = {{ ai_result | tojson }};
+    const isHealthy = {{ "true" if "healthy" in prediction['disease'] | lower else "false" }};
     
     // Dynamically build markdown from the dictionary keys
     let markdown = "";
     
-    // Add notice if present
-    if (aiResult.notice) {
-        markdown += `> [!NOTE]\n> ${aiResult.notice}\n\n`;
-    }
-    
-    if (aiResult.summary) {
-        markdown += `### 1. Summary\n${aiResult.summary}\n\n`;
-    }
-    
-    if (aiResult.symptoms && aiResult.symptoms.length > 0) {
-        markdown += `### 2. Symptoms\n`;
-        aiResult.symptoms.forEach(s => {
-            markdown += `- ${s}\n`;
-        });
-        markdown += `\n`;
-    }
-    
-    if (aiResult.causes && aiResult.causes.length > 0) {
-        markdown += `### 3. Possible Causes\n`;
-        aiResult.causes.forEach(c => {
-            markdown += `- ${c}\n`;
-        });
-        markdown += `\n`;
-    }
-    
-    if (aiResult.treatment && aiResult.treatment.length > 0) {
-        markdown += `### 4. Treatment / Care\n`;
-        aiResult.treatment.forEach(t => {
-            markdown += `- ${t}\n`;
-        });
-        markdown += `\n`;
-    }
-    
-    if (aiResult.prevention && aiResult.prevention.length > 0) {
-        markdown += `### 5. Prevention\n`;
-        aiResult.prevention.forEach(p => {
-            markdown += `- ${p}\n`;
-        });
-        markdown += `\n`;
-    }
-    
-    if (aiResult.watering && aiResult.watering.length > 0) {
-        markdown += `### 6. Smart Watering\n`;
-        aiResult.watering.forEach(w => {
-            markdown += `- ${w}\n`;
-        });
-        markdown += `\n`;
+    if (isHealthy) {
+        // Healthy plant leaf: keep only the summary section
+        markdown += `### Summary\n\n`;
+        markdown += `${aiResult.summary || ("The " + {{ prediction['plant'] | tojson }} + " specimen displays balanced foliage pigmentation and healthy structural turgor without acute pathogenic symptoms.")}\n\n`;
+    } else {
+        // Diseased plant leaf: display full clinical care & treatment plan
+        if (aiResult.notice) {
+            markdown += `> [!NOTE]\n> ${aiResult.notice}\n\n`;
+        }
+        
+        if (aiResult.summary) {
+            markdown += `### 1. Summary\n${aiResult.summary}\n\n`;
+        }
+        
+        if (aiResult.symptoms && aiResult.symptoms.length > 0) {
+            markdown += `### 2. Symptoms\n`;
+            aiResult.symptoms.forEach(s => {
+                markdown += `- ${s}\n`;
+            });
+            markdown += `\n`;
+        }
+        
+        if (aiResult.causes && aiResult.causes.length > 0) {
+            markdown += `### 3. Possible Causes\n`;
+            aiResult.causes.forEach(c => {
+                markdown += `- ${c}\n`;
+            });
+            markdown += `\n`;
+        }
+        
+        if (aiResult.treatment && aiResult.treatment.length > 0) {
+            markdown += `### 4. Treatment / Care\n`;
+            aiResult.treatment.forEach(t => {
+                markdown += `- ${t}\n`;
+            });
+            markdown += `\n`;
+        }
+        
+        if (aiResult.prevention && aiResult.prevention.length > 0) {
+            markdown += `### 5. Prevention\n`;
+            aiResult.prevention.forEach(p => {
+                markdown += `- ${p}\n`;
+            });
+            markdown += `\n`;
+        }
+        
+        if (aiResult.watering && aiResult.watering.length > 0) {
+            markdown += `### 6. Smart Watering\n`;
+            aiResult.watering.forEach(w => {
+                markdown += `- ${w}\n`;
+            });
+            markdown += `\n`;
+        }
     }
     
     document.getElementById('care-plan-markdown').innerHTML = marked.parse(markdown);
