@@ -24,7 +24,7 @@
                         {{ prediction['plant'] }} 
                         <span class="text-secondary">—</span> 
                         <span class="{% if "healthy" in prediction['disease'] | lower %}text-success{% else %}text-danger{% endif %}">
-                            {{ prediction['disease'] }}
+                            {% if "healthy" in prediction['disease'] | lower %}💚 {% endif %}{{ prediction['disease'] }}
                         </span>
                     </h3>
 
@@ -32,7 +32,7 @@
                     <div class="mb-3">
                         {% if "healthy" in prediction['disease'] | lower %}
                             <span class="badge bg-success-subtle text-success border border-success px-3 py-2 rounded-pill fw-semibold">
-                                <i class="bi bi-check-circle-fill me-1"></i> Healthy Specimen
+                                💚 Healthy Specimen
                             </span>
                         {% else %}
                             <span class="badge bg-danger-subtle text-danger border border-danger px-3 py-2 rounded-pill fw-semibold">
@@ -61,7 +61,8 @@
             </div>
         </div>
 
-        <!-- Smart Watering Management Card -->
+        {% if "healthy" not in prediction['disease'] | lower %}
+        <!-- Smart Watering Management Card (Displayed only for diseased plants) -->
         <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
             <div class="card-header bg-info-subtle border-0 py-3">
                 <h5 class="card-title fw-bold text-info-emphasis mb-0 d-flex align-items-center">
@@ -84,17 +85,10 @@
                     <span class="text-dark small d-block">{{ watering['best_time'] }}</span>
                 </div>
                 
-                {% if "healthy" not in prediction['disease'] | lower %}
                 <div class="mb-3 border-bottom pb-2">
                     <span class="text-muted small d-block mb-1 fw-bold text-uppercase"><i class="bi bi-sliders me-1 text-info"></i> Disease-Related Adjustment</span>
                     <span class="text-dark small d-block text-warning-emphasis bg-warning-subtle px-2.5 py-1 rounded border border-warning-subtle mt-1 d-inline-block">{{ watering['disease_adjustment'] }}</span>
                 </div>
-                {% else %}
-                <div class="mb-3 border-bottom pb-2">
-                    <span class="text-muted small d-block mb-1 fw-bold text-uppercase"><i class="bi bi-check-circle me-1 text-success"></i> Plant Condition Status</span>
-                    <span class="text-dark small d-block text-success-emphasis bg-success-subtle px-2.5 py-1 rounded border border-success-subtle mt-1 d-inline-block">Standard routine — foliage is healthy!</span>
-                </div>
-                {% endif %}
                 
                 <div class="mt-3">
                     <span class="text-muted small d-block mb-1 fw-bold text-uppercase"><i class="bi bi-pencil-square me-1 text-info"></i> Care Note</span>
@@ -104,6 +98,7 @@
                 </div>
             </div>
         </div>
+        {% endif %}
     </div>
 
     <!-- Right Column: Care Plan & Interactive Assistant Chatbot -->
@@ -112,9 +107,9 @@
             <li class="nav-item" role="presentation">
                 <button class="nav-link active rounded-pill px-4 fw-bold" id="care-plan-tab" data-bs-toggle="tab" data-bs-target="#care-plan-pane" type="button" role="tab">
                     {% if "healthy" in prediction['disease'] | lower %}
-                        <i class="bi bi-heart-pulse-fill me-1 text-success"></i> Plant Health Status
+                        💚 Plant Health Status
                     {% else %}
-                        <i class="bi bi-file-earmark-medical me-1 text-danger"></i> Care & Treatment Plan
+                        <i class="bi bi-file-earmark-medical me-1"></i> Care & Treatment Plan
                     {% endif %}
                 </button>
             </li>
