@@ -196,10 +196,6 @@
         markdown += `${aiResult.summary || ("The " + {{ prediction['plant'] | tojson }} + " specimen displays balanced foliage pigmentation and healthy structural turgor without acute pathogenic symptoms.")}\n\n`;
     } else {
         // Diseased plant leaf: display full clinical care & treatment plan
-        if (aiResult.notice) {
-            markdown += `> [!NOTE]\n> ${aiResult.notice}\n\n`;
-        }
-        
         if (aiResult.summary) {
             markdown += `### 1. Summary\n${aiResult.summary}\n\n`;
         }

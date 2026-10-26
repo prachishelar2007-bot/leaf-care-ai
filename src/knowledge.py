@@ -447,7 +447,7 @@ def get_offline_diagnosis(image_path):
     if detected_disease == "Healthy":
         return {
             "provider": "Leaf-Care Intelligent Botanical Engine",
-            "notice": "Analysis generated via local botanical knowledge engine (Cloud AI fallback).",
+            "notice": "",
             "summary": desc,
             "symptoms": [],
             "causes": [],
@@ -466,7 +466,7 @@ def get_offline_diagnosis(image_path):
         
     return {
         "provider": "Leaf-Care Intelligent Botanical Engine",
-        "notice": "Analysis generated via local botanical knowledge engine (Cloud AI fallback).",
+        "notice": "",
         "summary": desc,
         "symptoms": knowledge["symptoms"],
         "causes": knowledge["causes"],

@@ -100,7 +100,7 @@ GEMINI_API_KEY = os.getenv(
 
 GEMINI_MODEL = os.getenv(
     "GEMINI_MODEL",
-    "gemini-flash-latest"
+    "gemini-1.5-flash"
 )
 
 

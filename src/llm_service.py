@@ -116,7 +116,13 @@ def classify_and_explain_with_gemini(image_path: Path):
         ]
     }
     
-    candidate_models = [GEMINI_MODEL, 'gemini-flash-latest']
+    candidate_models = [
+        'gemini-1.5-flash',
+        'gemini-1.5-flash-latest',
+        'gemini-2.0-flash',
+        'gemini-1.5-pro',
+        GEMINI_MODEL
+    ]
     last_err = None
     data = None
     
@@ -125,7 +131,7 @@ def classify_and_explain_with_gemini(image_path: Path):
             continue
         try:
             url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent"
-            response = requests.post(url, headers=headers, json=payload, timeout=3.5)
+            response = requests.post(url, headers=headers, json=payload, timeout=15)
             if response.status_code == 200:
                 data = response.json()
                 break
