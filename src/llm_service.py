@@ -117,10 +117,9 @@ def classify_and_explain_with_gemini(image_path: Path):
     }
     
     candidate_models = [
-        'gemini-1.5-flash',
-        'gemini-1.5-flash-latest',
-        'gemini-2.0-flash',
-        'gemini-1.5-pro',
+        'gemini-3-flash-preview',
+        'gemini-3.6-flash',
+        'gemini-3.8-flash',
         GEMINI_MODEL
     ]
     last_err = None
@@ -131,7 +130,7 @@ def classify_and_explain_with_gemini(image_path: Path):
             continue
         try:
             url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent"
-            response = requests.post(url, headers=headers, json=payload, timeout=15)
+            response = requests.post(url, headers=headers, json=payload, timeout=12)
             if response.status_code == 200:
                 data = response.json()
                 break
@@ -381,56 +380,48 @@ def _call_gemini(
             "GEMINI_API_KEY is not configured."
         )
 
-    # --------------------------------------------------------
-    # GEMINI API ENDPOINT
-    # --------------------------------------------------------
-    url = (
-        "https://generativelanguage.googleapis.com/"
-        f"v1beta/models/{GEMINI_MODEL}:generateContent"
-    )
+    candidate_models = [
+        'gemini-3-flash-preview',
+        'gemini-3.6-flash',
+        'gemini-3.8-flash',
+        GEMINI_MODEL
+    ]
 
     headers = {
         "x-goog-api-key": GEMINI_API_KEY,
         "Content-Type": "application/json"
     }
 
-    # --------------------------------------------------------
-    # SEND REQUEST
-    # --------------------------------------------------------
-    response = requests.post(
-        url,
-        headers=headers,
-        json={
-            "contents": [
-                {
-                    "parts": [
+    last_err = None
+    for model_name in candidate_models:
+        if not model_name:
+            continue
+        try:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent"
+            response = requests.post(
+                url,
+                headers=headers,
+                json={
+                    "contents": [
                         {
-                            "text": prompt
+                            "parts": [
+                                {
+                                    "text": prompt
+                                }
+                            ]
                         }
                     ]
-                }
-            ]
-        },
-        timeout=60
-    )
+                },
+                timeout=30
+            )
+            if response.status_code == 200:
+                data = response.json()
+                return data["candidates"][0]["content"]["parts"][0]["text"]
+            last_err = f"HTTP {response.status_code}"
+        except Exception as e:
+            last_err = e
 
-    response.raise_for_status()
-    data = response.json()
-
-    # --------------------------------------------------------
-    # EXTRACT GENERATED TEXT
-    # --------------------------------------------------------
-    return (
-        data[
-            "candidates"
-        ][0][
-            "content"
-        ][
-            "parts"
-        ][0][
-            "text"
-        ]
-    )
+    raise RuntimeError(f"All Gemini models failed: {last_err}")
 
 
 # ============================================================
